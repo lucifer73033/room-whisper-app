@@ -92,7 +92,10 @@ class WebSocketService {
 
     this.client.publish({
       destination: `/app/room/chat/${roomId}`,
-      body: JSON.stringify({ message })
+      body: JSON.stringify({ 
+        purpose: 'chat', 
+        payload: message 
+      })
     });
   }
 
