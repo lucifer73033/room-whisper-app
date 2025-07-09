@@ -39,13 +39,13 @@ const Dashboard = () => {
     setIsCreating(true);
     
     try {
-      const response = await fetch('/room/create', {
+      const response = await fetch('http://localhost:8080/room/create', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
           'Authorization': getAuthHeader()
         },
-        body: JSON.stringify({ roomName: roomName.trim() })
+        body: JSON.stringify({ name: roomName.trim() })
       });
 
       if (response.ok) {
