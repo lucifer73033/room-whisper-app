@@ -1,4 +1,3 @@
-
 import { Client } from '@stomp/stompjs';
 
 export interface ChatMessage {
@@ -59,11 +58,18 @@ class WebSocketService {
 
     return this.client.subscribe(`/topic/room/chat/${roomId}`, (message) => {
       try {
-        const chatMessage = JSON.parse(message.body);
-        onMessage({
-          ...chatMessage,
-          timestamp: new Date(chatMessage.timestamp || Date.now())
-        });
+        const receivedData = JSON.parse(message.body);
+        console.log('Received chat data:', receivedData);
+        
+        // Extract the actual message content from the payload field
+        const chatMessage: ChatMessage = {
+          id: receivedData.id || Date.now().toString(),
+          username: receivedData.username || 'Unknown',
+          message: receivedData.payload || receivedData.message || '', // Use payload field
+          timestamp: new Date(receivedData.timestamp || Date.now())
+        };
+        
+        onMessage(chatMessage);
       } catch (error) {
         console.error('Error parsing chat message:', error);
       }
