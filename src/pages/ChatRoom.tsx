@@ -7,7 +7,8 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { useAuth } from '@/contexts/AuthContext';
 import { ArrowLeft, Send, Users, Wifi, WifiOff } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
-import WebSocketService, { ChatMessage } from '@/services/WebSocketService';
+import WebSocketService, { ChatMessage, VideoMessage } from '@/services/WebSocketService';
+import VideoPlayer from '@/components/VideoPlayer';
 
 const ChatRoom = () => {
   const { roomId } = useParams<{ roomId: string }>();
@@ -19,6 +20,7 @@ const ChatRoom = () => {
   const { username, isAuthenticated, getAuthHeader } = useAuth();
   const navigate = useNavigate();
   const { toast } = useToast();
+  const videoMessageHandlerRef = useRef<((message: VideoMessage) => void) | null>(null);
 
   useEffect(() => {
     if (!isAuthenticated) {
@@ -37,9 +39,12 @@ const ChatRoom = () => {
           setMessages(prev => [...prev, message]);
         });
 
-        // Subscribe to video updates (for future use)
+        // Subscribe to video updates
         WebSocketService.subscribeToVideo(roomId!, (videoData) => {
-          console.log('Video update:', videoData);
+          console.log('Video update received:', videoData);
+          if (videoMessageHandlerRef.current) {
+            videoMessageHandlerRef.current(videoData);
+          }
         });
 
         toast({
@@ -94,6 +99,23 @@ const ChatRoom = () => {
     }
   };
 
+  const handleVideoUpdate = (state: boolean, timestamp: number) => {
+    try {
+      WebSocketService.sendVideoUpdate(roomId!, state, timestamp);
+    } catch (error) {
+      console.error('Error sending video update:', error);
+      toast({
+        title: "Error",
+        description: "Failed to sync video. Please try again.",
+        variant: "destructive"
+      });
+    }
+  };
+
+  const handleVideoMessage = (handler: (message: VideoMessage) => void) => {
+    videoMessageHandlerRef.current = handler;
+  };
+
   const handleLeaveRoom = () => {
     WebSocketService.disconnect();
     navigate('/dashboard');
@@ -126,7 +148,7 @@ const ChatRoom = () => {
                 <Users className="h-5 w-5 text-blue-600" />
                 <div>
                   <h1 className="font-semibold">Room {roomId}</h1>
-                  <p className="text-sm text-gray-600">Chat Room</p>
+                  <p className="text-sm text-gray-600">Chat & Video Room</p>
                 </div>
               </div>
             </div>
@@ -147,10 +169,18 @@ const ChatRoom = () => {
         </div>
       </div>
 
-      {/* Chat Messages */}
+      {/* Main Content */}
       <div className="flex-1 container mx-auto px-4 py-4 flex flex-col max-w-4xl">
+        {/* Video Player */}
+        <VideoPlayer
+          roomId={roomId!}
+          onVideoUpdate={handleVideoUpdate}
+          onVideoMessage={handleVideoMessage}
+        />
+
+        {/* Chat Messages */}
         <div className="flex-1 bg-white/80 backdrop-blur-sm rounded-lg shadow-lg border-0 mb-4 flex flex-col">
-          <div className="flex-1 p-4 overflow-y-auto max-h-[calc(100vh-200px)]">
+          <div className="flex-1 p-4 overflow-y-auto max-h-[calc(100vh-400px)]">
             {messages.length === 0 ? (
               <div className="text-center text-gray-500 mt-8">
                 <Users className="h-12 w-12 mx-auto mb-2 opacity-50" />

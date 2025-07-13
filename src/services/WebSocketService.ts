@@ -7,6 +7,12 @@ export interface ChatMessage {
   timestamp: Date;
 }
 
+export interface VideoMessage {
+  state: string;
+  timestamp: string;
+  senderTime: string;
+}
+
 class WebSocketService {
   private client: Client | null = null;
   private isConnected: boolean = false;
@@ -76,7 +82,7 @@ class WebSocketService {
     });
   }
 
-  subscribeToVideo(roomId: string, onVideoUpdate: (data: any) => void) {
+  subscribeToVideo(roomId: string, onVideoUpdate: (data: VideoMessage) => void) {
     if (!this.client || !this.isConnected) {
       throw new Error('WebSocket not connected');
     }
@@ -84,6 +90,7 @@ class WebSocketService {
     return this.client.subscribe(`/topic/room/video/${roomId}`, (message) => {
       try {
         const videoData = JSON.parse(message.body);
+        console.log('Received video data:', videoData);
         onVideoUpdate(videoData);
       } catch (error) {
         console.error('Error parsing video message:', error);
@@ -102,6 +109,25 @@ class WebSocketService {
         purpose: 'chat', 
         payload: message 
       })
+    });
+  }
+
+  sendVideoUpdate(roomId: string, state: boolean, timestamp: number) {
+    if (!this.client || !this.isConnected) {
+      throw new Error('WebSocket not connected');
+    }
+
+    const videoMessage = {
+      state: state.toString(),
+      timestamp: timestamp.toString(),
+      senderTime: new Date().toISOString()
+    };
+
+    console.log('Sending video update:', videoMessage);
+
+    this.client.publish({
+      destination: `/app/room/video/${roomId}`,
+      body: JSON.stringify(videoMessage)
     });
   }
 
