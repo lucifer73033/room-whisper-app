@@ -88,14 +88,16 @@ const VideoPlayer: React.FC<VideoPlayerProps> = ({ roomId, username, onVideoUpda
     const currentTime = Date.now();
     const timeDifference = (currentTime - receivedTime) / 1000;
     
-    const targetTime = parseFloat(message.timestamp) + timeDifference;
-    const shouldPlay = message.state === 'true';
+    const targetTime = parseFloat(message.timestamp.toString()) + timeDifference;
+    // Fix: Handle both boolean and string state values
+    const shouldPlay = message.state === true || message.state === 'true';
 
     console.log('Syncing video:', {
       receivedTime: message.senderTime,
       timeDifference,
       targetTime,
       shouldPlay,
+      messageState: message.state,
       currentlyPlaying: !videoRef.current.paused
     });
 
