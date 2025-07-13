@@ -8,10 +8,10 @@ import { VideoMessage } from '@/services/WebSocketService';
 interface VideoPlayerProps {
   roomId: string;
   onVideoUpdate: (state: boolean, timestamp: number) => void;
-  onVideoMessage: (message: VideoMessage) => void;
+  videoMessageHandler: React.MutableRefObject<((message: VideoMessage) => void) | null>;
 }
 
-const VideoPlayer: React.FC<VideoPlayerProps> = ({ roomId, onVideoUpdate, onVideoMessage }) => {
+const VideoPlayer: React.FC<VideoPlayerProps> = ({ roomId, onVideoUpdate, videoMessageHandler }) => {
   const videoRef = useRef<HTMLVideoElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [videoSrc, setVideoSrc] = useState<string>('');
@@ -81,8 +81,8 @@ const VideoPlayer: React.FC<VideoPlayerProps> = ({ roomId, onVideoUpdate, onVide
   };
 
   useEffect(() => {
-    onVideoMessage(syncWithRemote);
-  }, [onVideoMessage]);
+    videoMessageHandler.current = syncWithRemote;
+  }, [videoMessageHandler]);
 
   return (
     <Card className="mb-4">

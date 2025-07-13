@@ -112,10 +112,6 @@ const ChatRoom = () => {
     }
   };
 
-  const handleVideoMessage = (handler: (message: VideoMessage) => void) => {
-    videoMessageHandlerRef.current = handler;
-  };
-
   const handleLeaveRoom = () => {
     WebSocketService.disconnect();
     navigate('/dashboard');
@@ -175,7 +171,7 @@ const ChatRoom = () => {
         <VideoPlayer
           roomId={roomId!}
           onVideoUpdate={handleVideoUpdate}
-          onVideoMessage={handleVideoMessage}
+          videoMessageHandler={videoMessageHandlerRef}
         />
 
         {/* Chat Messages */}
