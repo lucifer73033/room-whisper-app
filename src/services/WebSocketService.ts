@@ -1,3 +1,4 @@
+
 import { Client } from '@stomp/stompjs';
 
 export interface ChatMessage {
@@ -9,7 +10,7 @@ export interface ChatMessage {
 }
 
 export interface VideoMessage {
-  state: string;
+  state: boolean | string; // Allow both boolean and string to handle different formats
   timestamp: string;
   senderTime: string;
   userUUID: string;
