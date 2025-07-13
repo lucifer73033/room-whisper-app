@@ -5,12 +5,14 @@ export interface ChatMessage {
   username: string;
   message: string;
   timestamp: Date;
+  userUUID: string;
 }
 
 export interface VideoMessage {
   state: string;
   timestamp: string;
   senderTime: string;
+  userUUID: string;
 }
 
 class WebSocketService {
@@ -67,12 +69,12 @@ class WebSocketService {
         const receivedData = JSON.parse(message.body);
         console.log('Received chat data:', receivedData);
         
-        // Extract the actual message content from the payload field
         const chatMessage: ChatMessage = {
           id: receivedData.id || Date.now().toString(),
-          username: receivedData.username || 'Unknown',
-          message: receivedData.payload || receivedData.message || '', // Use payload field
-          timestamp: new Date(receivedData.timestamp || Date.now())
+          username: receivedData.userUUID || receivedData.username || 'Unknown',
+          message: receivedData.payload || receivedData.message || '',
+          timestamp: new Date(receivedData.timestamp || Date.now()),
+          userUUID: receivedData.userUUID || receivedData.username || 'Unknown'
         };
         
         onMessage(chatMessage);
@@ -98,7 +100,7 @@ class WebSocketService {
     });
   }
 
-  sendMessage(roomId: string, message: string) {
+  sendMessage(roomId: string, message: string, username: string) {
     if (!this.client || !this.isConnected) {
       throw new Error('WebSocket not connected');
     }
@@ -107,12 +109,13 @@ class WebSocketService {
       destination: `/app/room/chat/${roomId}`,
       body: JSON.stringify({ 
         purpose: 'chat', 
-        payload: message 
+        payload: message,
+        userUUID: username
       })
     });
   }
 
-  sendVideoUpdate(roomId: string, state: boolean, timestamp: number) {
+  sendVideoUpdate(roomId: string, state: boolean, timestamp: number, username: string) {
     if (!this.client || !this.isConnected) {
       throw new Error('WebSocket not connected');
     }
@@ -120,7 +123,8 @@ class WebSocketService {
     const videoMessage = {
       state: state.toString(),
       timestamp: timestamp.toString(),
-      senderTime: new Date().toISOString()
+      senderTime: new Date().toISOString(),
+      userUUID: username
     };
 
     console.log('Sending video update:', videoMessage);

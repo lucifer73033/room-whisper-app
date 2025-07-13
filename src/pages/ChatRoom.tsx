@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
@@ -87,7 +86,7 @@ const ChatRoom = () => {
     }
 
     try {
-      WebSocketService.sendMessage(roomId!, newMessage.trim());
+      WebSocketService.sendMessage(roomId!, newMessage.trim(), username!);
       setNewMessage('');
     } catch (error) {
       console.error('Error sending message:', error);
@@ -101,7 +100,7 @@ const ChatRoom = () => {
 
   const handleVideoUpdate = (state: boolean, timestamp: number) => {
     try {
-      WebSocketService.sendVideoUpdate(roomId!, state, timestamp);
+      WebSocketService.sendVideoUpdate(roomId!, state, timestamp, username!);
     } catch (error) {
       console.error('Error sending video update:', error);
       toast({
@@ -170,6 +169,7 @@ const ChatRoom = () => {
         {/* Video Player */}
         <VideoPlayer
           roomId={roomId!}
+          username={username!}
           onVideoUpdate={handleVideoUpdate}
           videoMessageHandler={videoMessageHandlerRef}
         />
@@ -187,17 +187,17 @@ const ChatRoom = () => {
                 {messages.map((message) => (
                   <div
                     key={message.id}
-                    className={`flex ${message.username === username ? 'justify-end' : 'justify-start'}`}
+                    className={`flex ${message.userUUID === username ? 'justify-end' : 'justify-start'}`}
                   >
                     <div
                       className={`max-w-xs lg:max-w-md px-4 py-2 rounded-lg ${
-                        message.username === username
+                        message.userUUID === username
                           ? 'bg-blue-600 text-white'
                           : 'bg-gray-200 text-gray-800'
                       }`}
                     >
-                      {message.username !== username && (
-                        <p className="text-xs opacity-75 mb-1">{message.username}</p>
+                      {message.userUUID !== username && (
+                        <p className="text-xs opacity-75 mb-1">{message.userUUID}</p>
                       )}
                       <p className="text-sm">{message.message}</p>
                       <p className="text-xs opacity-75 mt-1">

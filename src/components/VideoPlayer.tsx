@@ -7,11 +7,12 @@ import { VideoMessage } from '@/services/WebSocketService';
 
 interface VideoPlayerProps {
   roomId: string;
+  username: string;
   onVideoUpdate: (state: boolean, timestamp: number) => void;
   videoMessageHandler: React.MutableRefObject<((message: VideoMessage) => void) | null>;
 }
 
-const VideoPlayer: React.FC<VideoPlayerProps> = ({ roomId, onVideoUpdate, videoMessageHandler }) => {
+const VideoPlayer: React.FC<VideoPlayerProps> = ({ roomId, username, onVideoUpdate, videoMessageHandler }) => {
   const videoRef = useRef<HTMLVideoElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [videoSrc, setVideoSrc] = useState<string>('');
@@ -49,13 +50,16 @@ const VideoPlayer: React.FC<VideoPlayerProps> = ({ roomId, onVideoUpdate, videoM
   };
 
   const syncWithRemote = (message: VideoMessage) => {
-    if (!videoRef.current) return;
+    if (!videoRef.current || message.userUUID === username) {
+      console.log('Ignoring message from self:', message.userUUID);
+      return;
+    }
 
     setIsUpdatingFromRemote(true);
     
     const receivedTime = new Date(message.senderTime).getTime();
     const currentTime = Date.now();
-    const timeDifference = (currentTime - receivedTime) / 1000; // Convert to seconds
+    const timeDifference = (currentTime - receivedTime) / 1000;
     
     const targetTime = parseFloat(message.timestamp) + timeDifference;
     const shouldPlay = message.state === 'true';
@@ -64,7 +68,8 @@ const VideoPlayer: React.FC<VideoPlayerProps> = ({ roomId, onVideoUpdate, videoM
       receivedTime: message.senderTime,
       timeDifference,
       targetTime,
-      shouldPlay
+      shouldPlay,
+      currentlyPlaying: !videoRef.current.paused
     });
 
     videoRef.current.currentTime = Math.max(0, targetTime);
@@ -75,6 +80,9 @@ const VideoPlayer: React.FC<VideoPlayerProps> = ({ roomId, onVideoUpdate, videoM
     } else if (!shouldPlay && !videoRef.current.paused) {
       videoRef.current.pause();
       setIsPlaying(false);
+    } else if (shouldPlay) {
+      // Just seek to the correct time if already playing
+      setIsPlaying(true);
     }
 
     setTimeout(() => setIsUpdatingFromRemote(false), 100);
@@ -82,7 +90,7 @@ const VideoPlayer: React.FC<VideoPlayerProps> = ({ roomId, onVideoUpdate, videoM
 
   useEffect(() => {
     videoMessageHandler.current = syncWithRemote;
-  }, [videoMessageHandler]);
+  }, [videoMessageHandler, username]);
 
   return (
     <Card className="mb-4">
